@@ -35,11 +35,24 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 - UI: Streamlit first; final step: FastAPI endpoint + website chat widget
 - Tests: pytest
 
+## Website
+
+- Site: requests documentation, https://requests.readthedocs.io/en/latest/
+- Scope: only pages under `/en/latest/`. Skip `/en/stable/` (duplicate) and old versions (blocked by robots.txt).
+- No full sitemap (`sitemap.xml` lists only the version roots), so the scraper follows links within `/en/latest/`.
+
+## Scraping rules (from robots.txt and Read the Docs' automated access policy)
+
+- Check robots.txt before fetching (`urllib.robotparser`).
+- Max 1 request per second.
+- Identify the bot with an honest User-Agent: `"rag-chatbot-learning-project (contact: https://github.com/pramod-nanu)"`. Never pretend to be a browser.
+- Content is copyrighted by the requests project: keep scraped data local in `data/`, use it only for this learning project, and always cite source URLs in answers.
+
 ## Plan
 
 1. Setup (DONE)
-2. Choose website, check robots.txt and terms  <-- NEXT
-3. Scrape pages, save clean text with URL
+2. Choose website, check robots.txt and terms (DONE)
+3. Scrape pages, save clean text with URL  <-- NEXT
 4. Clean text (remove menus, footers, duplicates)
 5. Chunk (300-500 tokens, small overlap)
 6. Embed chunks locally
