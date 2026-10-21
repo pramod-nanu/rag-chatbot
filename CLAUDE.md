@@ -40,6 +40,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 - Site: requests documentation, https://requests.readthedocs.io/en/latest/
 - Scope: only pages under `/en/latest/`. Skip `/en/stable/` (duplicate) and old versions (blocked by robots.txt).
 - No full sitemap (`sitemap.xml` lists only the version roots), so the scraper follows links within `/en/latest/`.
+- Also skip `/_modules/` (the library's Python source, reached via "[source]" links): it was 50% of the text and would crowd out the explained docs. Revisit in step 15.
+- Scrape with `uv run python -m rag_chatbot.scrape` → `data/raw/pages.jsonl` (one `{"url", "title", "text"}` per line, 15 pages).
 
 ## Scraping rules (from robots.txt and Read the Docs' automated access policy)
 
@@ -52,8 +54,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 
 1. Setup (DONE)
 2. Choose website, check robots.txt and terms (DONE)
-3. Scrape pages, save clean text with URL  <-- NEXT
-4. Clean text (remove menus, footers, duplicates)
+3. Scrape pages, save clean text with URL (DONE)
+4. Clean text (remove menus, footers, duplicates)  <-- NEXT
 5. Chunk (300-500 tokens, small overlap)
 6. Embed chunks locally
 7. Store in Chroma with URL metadata
