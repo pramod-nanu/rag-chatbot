@@ -47,6 +47,7 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 - Embed with `uv run python -m rag_chatbot.embed` → `data/embeddings/chunks.npy` (153 × 384, normalized) + `ids.json` (row → chunk id). Takes ~5 s on CPU. Questions must go through `embed_question()`, which adds bge's query prefix; chunks get no prefix.
 - Quick check: `uv run python -m rag_chatbot.check_embeddings "<question>"` prints the top 3 chunks from the `.npy` file (no Chroma).
 - Store with `uv run python -m rag_chatbot.store` → Chroma collection `requests_docs` in `data/chroma/` (rebuilt from scratch each run; metadata `url`, `title`, `chunk_index`). Uses the saved Step 6 vectors, cosine space, `embedding_function=None` (never Chroma's built-in model) and `anonymized_telemetry=False`. Chroma returns distances: similarity = 1 − distance.
+- Retrieve with `search()` in `retrieve.py` (top 3 chunks, each with `id`, `url`, `title`, `text`, `score`) — reuse it for the chatbot. `uv run python -m rag_chatbot.retrieve` runs a 10-question exam (right page in top 3); it scored 10/10, all at rank 1. The exam checks the page, not the exact chunk.
 
 ## Scraping rules (from robots.txt and Read the Docs' automated access policy)
 
@@ -64,8 +65,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 5. Chunk (300-500 tokens, small overlap) (DONE)
 6. Embed chunks locally (DONE)
 7. Store in Chroma with URL metadata (DONE)
-8. Retrieval test (no LLM yet)  <-- NEXT
-9. Install Ollama, test the LLM on its own
+8. Retrieval test (no LLM yet) (DONE)
+9. Install Ollama, test the LLM on its own  <-- NEXT
 10. RAG prompt: answer only from context, otherwise say "I don't know"
 11. Connect retrieval and LLM
 12. Add citations (source URLs)
