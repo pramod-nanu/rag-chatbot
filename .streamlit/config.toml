@@ -1,0 +1,5 @@
+# Streamlit settings (read automatically when the app starts).
+
+[browser]
+# Don't send usage statistics: nothing leaves this computer.
+gatherUsageStats = false

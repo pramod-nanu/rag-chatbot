@@ -53,6 +53,7 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 - RAG prompt (`prompt.py`): rules alone did NOT stop the 3B model from answering from memory (8 prompt variants tried, incl. a repeated reminder and a worked example — it always made up the proxy answer). What works is "show your proof": the AI must write `Quote:` (a sentence copied from the notes) then `Answer:`; `quote_is_real()` checks the quote appears word for word in the notes (if `Quote:` is missing, the answer itself is the proof), otherwise `answer()` returns "I don't know.". `llm.chat(messages)` sends system + user messages. `uv run python -m rag_chatbot.prompt` runs 6 tests on a hand-written note: 6/6. The check is strict, so slightly reworded quotes from real chunks will give a false "I don't know" — measure this in step 14.
 - Full chatbot: `ask_docs(question, model, collection)` in `rag.py` = `search()` + `answer()`, returns `answer`, `reply` (raw AI text) and `notes`. `uv run python -m rag_chatbot.rag "<question>"` (no question → 3 test questions) shows the notes found, the AI's reply, the answer and the time (~11–18 s on CPU). Correct for timeout, proxy, JSON POST; "I don't know." for turbo_get(), MySQL, capital of France, etc. Weakness: the code example often ends up only in the quote, not in the final answer.
 - Citations: `find_sources()` in `prompt.py` returns the URL(s) of the note(s) containing the proof quote (deduplicated); `answer()` returns `(final, reply, sources)` and "I don't know" never gets a source. `format_answer(result)` in `rag.py` prints the answer + `Source:` links — reuse it for the UI. Limit: only the page of the quote is cited, even if the answer also used another note (e.g. timeout cites quickstart, but the `(3.05, 27)` example is from advanced). Revisit in step 15.
+- Chat UI: `uv run streamlit run src/rag_chatbot/app.py` → http://localhost:8501 (Ctrl+C to stop). `app.py` loads the search model + collection once (`st.cache_resource`), keeps the chat in `st.session_state.messages`, and shows `format_answer()` output. `.streamlit/config.toml` sets `gatherUsageStats = false` (no telemetry). Test without a browser via `streamlit.testing.v1.AppTest`.
 
 ## Scraping rules (from robots.txt and Read the Docs' automated access policy)
 
@@ -75,8 +76,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 10. RAG prompt: answer only from context, otherwise say "I don't know" (DONE)
 11. Connect retrieval and LLM (DONE)
 12. Add citations (source URLs) (DONE)
-13. Streamlit chat UI  <-- NEXT
-14. Evaluate: 15-20 test questions incl. unanswerable ones; note speed
+13. Streamlit chat UI (DONE)
+14. Evaluate: 15-20 test questions incl. unanswerable ones; note speed  <-- NEXT
 15. Improve: chunk size, top-k, prompt, model size
 16. README
 17. FastAPI endpoint + website chat widget
