@@ -17,14 +17,15 @@ LLM_MODEL = "llama3.2:3b"
 LLM_OPTIONS = {"num_gpu": 0, "temperature": 0}
 
 
-def ask(question: str) -> str:
-    """Send one question to the AI and return its answer."""
-    response = ollama.chat(
-        model=LLM_MODEL,
-        messages=[{"role": "user", "content": question}],
-        options=LLM_OPTIONS,
-    )
+def chat(messages: list[dict]) -> str:
+    """Send a list of messages (e.g. rules + question) to the AI, return its answer."""
+    response = ollama.chat(model=LLM_MODEL, messages=messages, options=LLM_OPTIONS)
     return response.message.content
+
+
+def ask(question: str) -> str:
+    """Send one plain question (no rules, no notes) to the AI and return its answer."""
+    return chat([{"role": "user", "content": question}])
 
 
 def main() -> None:
