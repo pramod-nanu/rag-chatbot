@@ -54,6 +54,7 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 - Full chatbot: `ask_docs(question, model, collection)` in `rag.py` = `search()` + `answer()`, returns `answer`, `reply` (raw AI text) and `notes`. `uv run python -m rag_chatbot.rag "<question>"` (no question → 3 test questions) shows the notes found, the AI's reply, the answer and the time (~11–18 s on CPU). Correct for timeout, proxy, JSON POST; "I don't know." for turbo_get(), MySQL, capital of France, etc. Weakness: the code example often ends up only in the quote, not in the final answer.
 - Citations: `find_sources()` in `prompt.py` returns the URL(s) of the note(s) containing the proof quote (deduplicated); `answer()` returns `(final, reply, sources)` and "I don't know" never gets a source. `format_answer(result)` in `rag.py` prints the answer + `Source:` links — reuse it for the UI. Limit: only the page of the quote is cited, even if the answer also used another note (e.g. timeout cites quickstart, but the `(3.05, 27)` example is from advanced). Revisit in step 15.
 - Chat UI: `uv run streamlit run src/rag_chatbot/app.py` → http://localhost:8501 (Ctrl+C to stop). `app.py` loads the search model + collection once (`st.cache_resource`), keeps the chat in `st.session_state.messages`, and shows `format_answer()` output. `.streamlit/config.toml` sets `gatherUsageStats = false` (no telemetry). Test without a browser via `streamlit.testing.v1.AppTest`.
+- Evaluate with `uv run python -m rag_chatbot.evaluate` (~5 min): 14 answerable questions (pass = an answer whose source is one of the right pages) + 6 unanswerable (pass = "I don't know."). Saves every answer to `data/eval/results.jsonl`. Baseline (step 14): 20/20, average 15.9 s (8.8–26.1 s). The score checks the page, not correctness — reading the answers found: retry answer slightly wrong (skips `HTTPAdapter`), upload/headers answers vague with no code, proxy answer says "as shown in Note 2" (users can't see notes). Nothing made up.
 
 ## Scraping rules (from robots.txt and Read the Docs' automated access policy)
 
@@ -77,8 +78,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 11. Connect retrieval and LLM (DONE)
 12. Add citations (source URLs) (DONE)
 13. Streamlit chat UI (DONE)
-14. Evaluate: 15-20 test questions incl. unanswerable ones; note speed  <-- NEXT
-15. Improve: chunk size, top-k, prompt, model size
+14. Evaluate: 15-20 test questions incl. unanswerable ones; note speed (DONE)
+15. Improve: chunk size, top-k, prompt, model size  <-- NEXT
 16. README
 17. FastAPI endpoint + website chat widget
 18. Optional: more unit tests, Docker, hybrid search
