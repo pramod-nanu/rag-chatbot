@@ -48,6 +48,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 - Quick check: `uv run python -m rag_chatbot.check_embeddings "<question>"` prints the top 3 chunks from the `.npy` file (no Chroma).
 - Store with `uv run python -m rag_chatbot.store` → Chroma collection `requests_docs` in `data/chroma/` (rebuilt from scratch each run; metadata `url`, `title`, `chunk_index`). Uses the saved Step 6 vectors, cosine space, `embedding_function=None` (never Chroma's built-in model) and `anonymized_telemetry=False`. Chroma returns distances: similarity = 1 − distance.
 - Retrieve with `search()` in `retrieve.py` (top 3 chunks, each with `id`, `url`, `title`, `text`, `score`) — reuse it for the chatbot. `uv run python -m rag_chatbot.retrieve` runs a 10-question exam (right page in top 3); it scored 10/10, all at rank 1. The exam checks the page, not the exact chunk.
+- LLM: Ollama 0.40.16 (installed via the install script), model `llama3.2:3b` (Q4_K_M, 2.0 GB on disk, ~2.9 GB in RAM). `ask()` in `llm.py` sends one question with `num_gpu: 0` and `temperature: 0` (same question → same answer) — reuse it for the chatbot. `uv run python -m rag_chatbot.llm "<question>"` prints the answer and time (~15 s for a long answer); `ollama ps` should show `100% CPU`.
+- Without docs, the LLM hallucinates confidently: it explained the non-existent `requests.turbo_get()`, and for timeouts it invented `session.timeout = 5` and `retries=`/`backoff_factor=` arguments. Given a text without the answer plus an "answer only from this text" rule, it correctly said "I don't know". Use these as test questions in step 14.
 
 ## Scraping rules (from robots.txt and Read the Docs' automated access policy)
 
@@ -66,8 +68,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 6. Embed chunks locally (DONE)
 7. Store in Chroma with URL metadata (DONE)
 8. Retrieval test (no LLM yet) (DONE)
-9. Install Ollama, test the LLM on its own  <-- NEXT
-10. RAG prompt: answer only from context, otherwise say "I don't know"
+9. Install Ollama, test the LLM on its own (DONE)
+10. RAG prompt: answer only from context, otherwise say "I don't know"  <-- NEXT
 11. Connect retrieval and LLM
 12. Add citations (source URLs)
 13. Streamlit chat UI
