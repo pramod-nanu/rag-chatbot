@@ -51,6 +51,7 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 - LLM: Ollama 0.40.16 (installed via the install script), model `llama3.2:3b` (Q4_K_M, 2.0 GB on disk, ~2.9 GB in RAM). `ask()` in `llm.py` sends one question with `num_gpu: 0` and `temperature: 0` (same question → same answer) — reuse it for the chatbot. `uv run python -m rag_chatbot.llm "<question>"` prints the answer and time (~15 s for a long answer); `ollama ps` should show `100% CPU`.
 - Without docs, the LLM hallucinates confidently: it explained the non-existent `requests.turbo_get()`, and for timeouts it invented `session.timeout = 5` and `retries=`/`backoff_factor=` arguments. Given a text without the answer plus an "answer only from this text" rule, it correctly said "I don't know". Use these as test questions in step 14.
 - RAG prompt (`prompt.py`): rules alone did NOT stop the 3B model from answering from memory (8 prompt variants tried, incl. a repeated reminder and a worked example — it always made up the proxy answer). What works is "show your proof": the AI must write `Quote:` (a sentence copied from the notes) then `Answer:`; `quote_is_real()` checks the quote appears word for word in the notes (if `Quote:` is missing, the answer itself is the proof), otherwise `answer()` returns "I don't know.". `llm.chat(messages)` sends system + user messages. `uv run python -m rag_chatbot.prompt` runs 6 tests on a hand-written note: 6/6. The check is strict, so slightly reworded quotes from real chunks will give a false "I don't know" — measure this in step 14.
+- Full chatbot: `ask_docs(question, model, collection)` in `rag.py` = `search()` + `answer()`, returns `answer`, `reply` (raw AI text) and `notes`. `uv run python -m rag_chatbot.rag "<question>"` (no question → 3 test questions) shows the notes found, the AI's reply, the answer and the time (~11–18 s on CPU). Correct for timeout, proxy, JSON POST; "I don't know." for turbo_get(), MySQL, capital of France, etc. Weakness: the code example often ends up only in the quote, not in the final answer.
 
 ## Scraping rules (from robots.txt and Read the Docs' automated access policy)
 
@@ -71,8 +72,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 8. Retrieval test (no LLM yet) (DONE)
 9. Install Ollama, test the LLM on its own (DONE)
 10. RAG prompt: answer only from context, otherwise say "I don't know" (DONE)
-11. Connect retrieval and LLM  <-- NEXT
-12. Add citations (source URLs)
+11. Connect retrieval and LLM (DONE)
+12. Add citations (source URLs)  <-- NEXT
 13. Streamlit chat UI
 14. Evaluate: 15-20 test questions incl. unanswerable ones; note speed
 15. Improve: chunk size, top-k, prompt, model size
