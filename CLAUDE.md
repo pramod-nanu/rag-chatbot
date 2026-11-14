@@ -52,6 +52,7 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 - Without docs, the LLM hallucinates confidently: it explained the non-existent `requests.turbo_get()`, and for timeouts it invented `session.timeout = 5` and `retries=`/`backoff_factor=` arguments. Given a text without the answer plus an "answer only from this text" rule, it correctly said "I don't know". Use these as test questions in step 14.
 - RAG prompt (`prompt.py`): rules alone did NOT stop the 3B model from answering from memory (8 prompt variants tried, incl. a repeated reminder and a worked example — it always made up the proxy answer). What works is "show your proof": the AI must write `Quote:` (a sentence copied from the notes) then `Answer:`; `quote_is_real()` checks the quote appears word for word in the notes (if `Quote:` is missing, the answer itself is the proof), otherwise `answer()` returns "I don't know.". `llm.chat(messages)` sends system + user messages. `uv run python -m rag_chatbot.prompt` runs 6 tests on a hand-written note: 6/6. The check is strict, so slightly reworded quotes from real chunks will give a false "I don't know" — measure this in step 14.
 - Full chatbot: `ask_docs(question, model, collection)` in `rag.py` = `search()` + `answer()`, returns `answer`, `reply` (raw AI text) and `notes`. `uv run python -m rag_chatbot.rag "<question>"` (no question → 3 test questions) shows the notes found, the AI's reply, the answer and the time (~11–18 s on CPU). Correct for timeout, proxy, JSON POST; "I don't know." for turbo_get(), MySQL, capital of France, etc. Weakness: the code example often ends up only in the quote, not in the final answer.
+- Citations: `find_sources()` in `prompt.py` returns the URL(s) of the note(s) containing the proof quote (deduplicated); `answer()` returns `(final, reply, sources)` and "I don't know" never gets a source. `format_answer(result)` in `rag.py` prints the answer + `Source:` links — reuse it for the UI. Limit: only the page of the quote is cited, even if the answer also used another note (e.g. timeout cites quickstart, but the `(3.05, 27)` example is from advanced). Revisit in step 15.
 
 ## Scraping rules (from robots.txt and Read the Docs' automated access policy)
 
@@ -73,8 +74,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 9. Install Ollama, test the LLM on its own (DONE)
 10. RAG prompt: answer only from context, otherwise say "I don't know" (DONE)
 11. Connect retrieval and LLM (DONE)
-12. Add citations (source URLs)  <-- NEXT
-13. Streamlit chat UI
+12. Add citations (source URLs) (DONE)
+13. Streamlit chat UI  <-- NEXT
 14. Evaluate: 15-20 test questions incl. unanswerable ones; note speed
 15. Improve: chunk size, top-k, prompt, model size
 16. README

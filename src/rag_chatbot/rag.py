@@ -18,8 +18,16 @@ from rag_chatbot.store import get_client, get_collection
 def ask_docs(question: str, model, collection) -> dict:
     """Find the best notes for the question, then ask the AI to answer from them."""
     notes = search(question, model, collection)
-    final, reply = answer(question, notes)
-    return {"answer": final, "reply": reply, "notes": notes}
+    final, reply, sources = answer(question, notes)
+    return {"answer": final, "reply": reply, "notes": notes, "sources": sources}
+
+
+def format_answer(result: dict) -> str:
+    """The answer as the user sees it: the text, then its source page(s)."""
+    if not result["sources"]:
+        return result["answer"]
+    links = "\n".join(f"  {url}" for url in result["sources"])
+    return f"{result['answer']}\n\nSource:\n{links}"
 
 
 def main() -> None:
@@ -27,6 +35,7 @@ def main() -> None:
     questions = [" ".join(sys.argv[1:])] if sys.argv[1:] else [
         "How do I set a timeout?",
         "How do I use a proxy?",
+        "How do I send JSON in a POST request?",
         "How do I use requests.turbo_get()?",
     ]
     # Load the search model and the database once, then reuse them.
@@ -41,8 +50,8 @@ def main() -> None:
         for note in result["notes"]:
             print(f"  - {note['id']}  (score {note['score']:.2f})")
         print(f"AI wrote: {' '.join(result['reply'].split())}")
-        print(f"Answer:   {result['answer']}")
         print(f"({time.time() - start:.1f} seconds)")
+        print(f"\n{format_answer(result)}\n" + "-" * 60)
 
 
 if __name__ == "__main__":

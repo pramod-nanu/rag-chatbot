@@ -6,7 +6,8 @@ Rules alone were not enough: the small 3B model still made up answers from
 its own memory (e.g. about proxies). So the AI must first copy the sentence
 from the notes that answers the question ("Quote: ..."), then answer
 ("Answer: ..."). Python then checks that the quote is really in the notes.
-No real quote -> we reply "I don't know".
+No real quote -> we reply "I don't know". The note holding the quote also
+tells us the source page to cite (Step 12).
 
 Run with:  uv run python -m rag_chatbot.prompt
 (sends test questions with a hand-written note to the AI and gives a score)
@@ -42,9 +43,12 @@ def build_messages(question: str, notes: list[dict]) -> list[dict]:
 
 def split_reply(reply: str) -> tuple[str, str]:
     """Split the AI's reply into (quote, answer). Missing parts become ""."""
-    quote = re.search(r"Quote:\s*(.*?)\s*(?=Answer:|$)", reply, re.S)
-    answer = re.search(r"Answer:\s*(.*)", reply, re.S)
-    return (quote.group(1) if quote else ""), (answer.group(1).strip() if answer else "")
+    quote_match = re.search(r"Quote:\s*(.*?)\s*(?=Answer:|$)", reply, re.S)
+    answer_match = re.search(r"Answer:\s*(.*)", reply, re.S)
+    return (
+        quote_match.group(1) if quote_match else "",
+        answer_match.group(1).strip() if answer_match else "",
+    )
 
 
 def squash(text: str) -> str:
@@ -52,31 +56,40 @@ def squash(text: str) -> str:
     return " ".join(text.lower().split())
 
 
-def quote_is_real(quote: str, notes: list[dict]) -> bool:
-    """True if the quote really appears (word for word) in one of the notes."""
+def find_sources(quote: str, notes: list[dict]) -> list[str]:
+    """Return the page URLs of the notes that contain the quote word for word.
+
+    An empty list means the quote is not really in the notes (made up).
+    """
     # Ignore quote marks / a trailing ":" or "." that the AI may add around it.
     quote = squash(quote).strip("\"' ").rstrip(":.")
     if not quote or quote == "none":
-        return False
-    return any(quote in squash(note["text"]) for note in notes)
+        return []
+    urls = [note["url"] for note in notes if quote in squash(note["text"])]
+    # Two notes can come from the same page: list each page only once.
+    return list(dict.fromkeys(urls))
 
 
-def answer(question: str, notes: list[dict]) -> tuple[str, str]:
-    """Ask the AI with the rules; return (final answer, the AI's raw reply)."""
+def answer(question: str, notes: list[dict]) -> tuple[str, str, list[str]]:
+    """Ask the AI with the rules.
+
+    Returns (final answer, the AI's raw reply, source page URLs).
+    "I don't know" never gets a source: it doesn't come from any page.
+    """
     reply = chat(build_messages(question, notes))
     quote, text = split_reply(reply)
     # Sometimes the AI skips "Quote:" and copies the note straight into its
     # answer; then the answer itself is the proof.
-    proof = quote or text
-    if not quote_is_real(proof, notes) or not text:
-        return I_DONT_KNOW, reply
-    return text, reply
+    sources = find_sources(quote or text, notes)
+    if not sources or not text:
+        return I_DONT_KNOW, reply, []
+    return text, reply, sources
 
 
 def main() -> None:
     """Test the rules with a hand-written note: some questions answerable, some not."""
     # A short note in the style of the real docs (written by hand for this test).
-    notes = [{"text": (
+    notes = [{"url": "(hand-written note)", "text": (
         "You can tell Requests to stop waiting for a response after a given "
         "number of seconds with the timeout parameter:\n"
         "requests.get('https://github.com/', timeout=0.001)\n\n"
@@ -96,7 +109,7 @@ def main() -> None:
     print(f"Note given to the AI:\n{notes[0]['text']}\n")
     passed = 0
     for question, answerable in tests:
-        final, reply = answer(question, notes)
+        final, reply, _ = answer(question, notes)
         ok = (final != I_DONT_KNOW) == answerable
         passed += ok
         print(f"{'PASS' if ok else 'FAIL'}  {question}")
