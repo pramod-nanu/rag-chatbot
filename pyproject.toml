@@ -1,7 +1,7 @@
 [project]
 name = "rag-chatbot"
 version = "0.1.0"
-description = "Add your description here"
+description = "Local CPU-only RAG chatbot for the requests documentation"
 readme = "README.md"
 authors = [
     { name = "pramod", email = "pramodgaikwad585@gmail.com" }

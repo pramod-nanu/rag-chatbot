@@ -80,9 +80,9 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 12. Add citations (source URLs) (DONE)
 13. Streamlit chat UI (DONE)
 14. Evaluate: 15-20 test questions incl. unanswerable ones; note speed (DONE)
-15. Improve: chunk size, top-k, prompt, model size  <-- NEXT
-16. README
-17. FastAPI endpoint + website chat widget
+15. Improve: chunk size, top-k, prompt, model size (DONE: "From the docs" quote; other ideas not needed yet)
+16. README (DONE)
+17. FastAPI endpoint + website chat widget  <-- NEXT
 18. Optional: more unit tests, Docker, hybrid search
 
 ## Golden rule
