@@ -83,6 +83,9 @@ def answer(question: str, notes: list[dict]) -> tuple[str, str, list[str]]:
     sources = find_sources(quote or text, notes)
     if not sources or not text:
         return I_DONT_KNOW, reply, []
+    # Users can't see our numbered notes, so "as shown in Note 2" becomes
+    # "as shown in the docs".
+    text = re.sub(r"\bNotes? \d+(?: and \d+)?", "the docs", text)
     return text, reply, sources
 
 

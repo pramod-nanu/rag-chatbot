@@ -10,7 +10,7 @@ import sys
 import time
 
 from rag_chatbot.embed import load_model
-from rag_chatbot.prompt import answer
+from rag_chatbot.prompt import answer, find_sources, split_reply
 from rag_chatbot.retrieve import search
 from rag_chatbot.store import get_client, get_collection
 
@@ -19,15 +19,26 @@ def ask_docs(question: str, model, collection) -> dict:
     """Find the best notes for the question, then ask the AI to answer from them."""
     notes = search(question, model, collection)
     final, reply, sources = answer(question, notes)
-    return {"answer": final, "reply": reply, "notes": notes, "sources": sources}
+    # Step 15: keep the AI's proof quote to show under the answer, but only if
+    # there is an answer and the quote really is in the docs (checked again).
+    quote = split_reply(reply)[0].strip()
+    if not sources or not find_sources(quote, notes):
+        quote = ""
+    return {"answer": final, "reply": reply, "notes": notes, "sources": sources,
+            "quote": quote}
 
 
 def format_answer(result: dict) -> str:
-    """The answer as the user sees it: the text, then its source page(s)."""
+    """The answer as the user sees it: the text, the docs quote, the source page(s)."""
     if not result["sources"]:
         return result["answer"]
+    text = result["answer"]
+    if result.get("quote"):
+        # A code block keeps the docs' line breaks and code examples readable,
+        # both in the terminal and in the Streamlit chat.
+        text += f"\n\nFrom the docs:\n```text\n{result['quote']}\n```"
     links = "\n".join(f"  {url}" for url in result["sources"])
-    return f"{result['answer']}\n\nSource:\n{links}"
+    return f"{text}\n\nSource:\n{links}"
 
 
 def main() -> None:
