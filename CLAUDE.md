@@ -56,6 +56,7 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 - Chat UI: `uv run streamlit run src/rag_chatbot/app.py` → http://localhost:8501 (Ctrl+C to stop). `app.py` loads the search model + collection once (`st.cache_resource`), keeps the chat in `st.session_state.messages`, and shows `format_answer()` output. `.streamlit/config.toml` sets `gatherUsageStats = false` (no telemetry). Test without a browser via `streamlit.testing.v1.AppTest`.
 - Evaluate with `uv run python -m rag_chatbot.evaluate` (~5 min): 14 answerable questions (pass = an answer whose source is one of the right pages) + 6 unanswerable (pass = "I don't know."). Saves every answer to `data/eval/results.jsonl`. Baseline (step 14): 20/20, average 15.9 s (8.8–26.1 s). The score checks the page, not correctness — reading the answers found: retry answer slightly wrong (skips `HTTPAdapter`), upload/headers answers vague with no code, proxy answer says "as shown in Note 2" (users can't see notes). Nothing made up.
 - Step 15 lessons: adding rules to the prompt ("include the code", "don't mention Note 1") broke it — the 3B model stopped writing `Quote:` and the score fell to 9/20; two other layouts also failed. Keep the AI's rules minimal and fix things in Python instead. Improvement 1 (kept, still 20/20, ~12 s average): `ask_docs()` returns the checked proof `quote`, and `format_answer()` shows it as a "From the docs:" code block (often contains the code example); `answer()` replaces "Note N" with "the docs". Still weak: retry answer (quote stops before the code).
+- Web: `uv run uvicorn rag_chatbot.api:app --host 127.0.0.1 --port 8000`. `api.py` has `POST /ask` (`{"question"}` 1–500 chars → `{"answer", "quote", "sources"}`, 422 if invalid; plain `def` so the slow AI call runs in a thread; search model loaded once via `functools.cache`) and `GET /` serving `static/index.html` (demo page + 💬 widget; same origin, so no CORS needed). The widget uses `textContent` only (no innerHTML for AI text) and links only `https://requests.readthedocs.io/` URLs. Test with `fastapi.testclient.TestClient`.
 
 ## Scraping rules (from robots.txt and Read the Docs' automated access policy)
 
@@ -82,8 +83,8 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 14. Evaluate: 15-20 test questions incl. unanswerable ones; note speed (DONE)
 15. Improve: chunk size, top-k, prompt, model size (DONE: "From the docs" quote; other ideas not needed yet)
 16. README (DONE)
-17. FastAPI endpoint + website chat widget  <-- NEXT
-18. Optional: more unit tests, Docker, hybrid search
+17. FastAPI endpoint + website chat widget (DONE)
+18. Optional: more unit tests, Docker, hybrid search  <-- NEXT
 
 ## Golden rule
 

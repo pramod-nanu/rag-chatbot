@@ -1,0 +1,138 @@
+<!doctype html>
+<!--
+  Step 17: a demo web page with a chat widget (the "waiter").
+  The chat button opens a small chat box. Each question is sent to our
+  FastAPI server (POST /ask) and the answer, the docs quote and the source
+  link are shown. Served by api.py at http://localhost:8000/
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo Site with Chat</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; max-width: 40rem;
+           line-height: 1.5; color: #222; background: #fafafa; }
+
+    /* The round chat button, bottom-right. */
+    #chat-button { position: fixed; right: 1.5rem; bottom: 1.5rem; width: 3.5rem; height: 3.5rem;
+                   border: none; border-radius: 50%; background: #2563eb; color: white;
+                   font-size: 1.5rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+
+    /* The chat box (hidden until the button is clicked). */
+    #chat-box { position: fixed; right: 1.5rem; bottom: 6rem; width: min(24rem, calc(100vw - 3rem));
+                height: 32rem; max-height: calc(100vh - 8rem); display: none; flex-direction: column;
+                background: white; border-radius: .75rem; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+                overflow: hidden; }
+    #chat-box.open { display: flex; }
+    #chat-header { background: #2563eb; color: white; padding: .75rem 1rem; font-weight: 600; }
+    #messages { flex: 1; overflow-y: auto; padding: .75rem; display: flex; flex-direction: column;
+                gap: .5rem; }
+    .msg { padding: .5rem .75rem; border-radius: .5rem; max-width: 90%; white-space: pre-wrap;
+           overflow-wrap: anywhere; font-size: .9rem; }
+    .user { align-self: flex-end; background: #2563eb; color: white; }
+    .bot { align-self: flex-start; background: #f1f1f1; }
+    .bot pre { background: #e2e2e2; padding: .5rem; border-radius: .25rem; white-space: pre-wrap;
+               font-size: .8rem; margin: .5rem 0; }
+    .bot a { color: #1d4ed8; }
+    #chat-form { display: flex; border-top: 1px solid #ddd; }
+    #question { flex: 1; border: none; padding: .75rem; font-size: .9rem; }
+    #send { border: none; background: #2563eb; color: white; padding: 0 1rem; cursor: pointer; }
+    #send:disabled { background: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>My Python Tips</h1>
+  <p>This is a pretend website. It shows how a chat button can sit on any page.</p>
+  <p>Click the 💬 button in the bottom-right corner and ask a question about the
+     Python <strong>requests</strong> library. The answers come only from the requests
+     documentation, from a chatbot running on this computer.</p>
+
+  <button id="chat-button" title="Open chat">💬</button>
+
+  <div id="chat-box">
+    <div id="chat-header">Requests Docs Chatbot</div>
+    <div id="messages"></div>
+    <form id="chat-form">
+      <input id="question" placeholder="Ask about requests..." autocomplete="off" maxlength="500">
+      <button id="send">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const box = document.getElementById("chat-box");
+    const messages = document.getElementById("messages");
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("question");
+    const send = document.getElementById("send");
+
+    // Open / close the chat box.
+    document.getElementById("chat-button").onclick = () => {
+      box.classList.toggle("open");
+      input.focus();
+    };
+
+    // Add a message bubble. We use textContent (never innerHTML) for the AI's
+    // text, so nothing in an answer can run as code in the page.
+    function addMessage(cls, text) {
+      const div = document.createElement("div");
+      div.className = "msg " + cls;
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+      return div;
+    }
+
+    function showAnswer(div, data) {
+      div.textContent = data.answer;
+      if (data.quote) {
+        const label = document.createElement("div");
+        label.textContent = "From the docs:";
+        const pre = document.createElement("pre");
+        pre.textContent = data.quote;
+        div.append(label, pre);
+      }
+      for (const url of data.sources) {
+        // Only link to the requests docs, never to anything else.
+        if (!url.startsWith("https://requests.readthedocs.io/")) continue;
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = url;
+        const line = document.createElement("div");
+        line.append("Source: ", link);
+        div.append(line);
+      }
+    }
+
+    // Send the question to the kitchen (POST /ask) and show the reply.
+    form.onsubmit = async (event) => {
+      event.preventDefault();  // don't reload the page
+      const question = input.value.trim();
+      if (!question) return;
+
+      addMessage("user", question);
+      input.value = "";
+      send.disabled = true;
+      const reply = addMessage("bot", "Thinking... (about 10-20 seconds)");
+
+      try {
+        const response = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+        if (!response.ok) throw new Error("server said " + response.status);
+        showAnswer(reply, await response.json());
+      } catch (error) {
+        reply.textContent = "Sorry, something went wrong (" + error.message + ").";
+      } finally {
+        send.disabled = false;
+        input.focus();
+        messages.scrollTop = messages.scrollHeight;
+      }
+    };
+  </script>
+</body>
+</html>

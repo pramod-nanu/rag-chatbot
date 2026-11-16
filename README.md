@@ -86,6 +86,18 @@ uv run streamlit run src/rag_chatbot/app.py
 
 Then open http://localhost:8501. Press Ctrl+C in the terminal to stop it.
 
+**On a web page** (FastAPI server + chat widget):
+
+```bash
+uv run uvicorn rag_chatbot.api:app --host 127.0.0.1 --port 8000
+```
+
+Then open http://localhost:8000/ and click the 💬 button in the bottom-right
+corner. The page sends each question to `POST /ask`, which returns JSON:
+`{"answer": "...", "quote": "...", "sources": ["https://..."]}`. FastAPI's
+test page for the endpoint is at http://localhost:8000/docs. With
+`--host 127.0.0.1`, only this computer can reach the server.
+
 **In the terminal:**
 
 ```bash
@@ -130,6 +142,8 @@ src/rag_chatbot/
   prompt.py            rules for the AI + the "show your proof" check
   rag.py               ask_docs(): the whole chatbot
   app.py               Streamlit chat window
+  api.py               FastAPI server: POST /ask + serves the chat page
+  static/index.html    demo web page with the chat widget
   evaluate.py          the 20-question exam
 data/                  everything downloaded or built (not in git)
 ```
