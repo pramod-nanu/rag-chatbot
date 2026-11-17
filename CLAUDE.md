@@ -84,7 +84,9 @@ The M3 has a GPU that libraries use automatically. Always force CPU:
 15. Improve: chunk size, top-k, prompt, model size (DONE: "From the docs" quote; other ideas not needed yet)
 16. README (DONE)
 17. FastAPI endpoint + website chat widget (DONE)
-18. Optional: more unit tests, Docker, hybrid search  <-- NEXT
+18. Optional: more unit tests, Docker, hybrid search (DONE: pytest checks for the proof check; Docker, hybrid search and tests for clean/scrape/rag/api skipped for now)
+
+Project complete. Code is on GitHub: https://github.com/pramod-nanu/rag-chatbot (public; `data/` is not pushed).
 
 ## Golden rule
 
