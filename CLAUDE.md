@@ -107,6 +107,6 @@ Once pytest is added (`uv add --dev pytest`): `uv run pytest`; single test: `uv 
 
 - `src/rag_chatbot/` — the package (src layout, built with `uv_build`). `__init__.py:main` is the `rag-chatbot` console script. The project is installed editable into `.venv`, so code changes take effect without reinstalling.
 - `data/` — scraped text and the Chroma database. Git-ignored; never commit its contents.
-- `tests/` — pytest tests (empty so far).
+- `tests/` — pytest tests (`uv run pytest`, < 1 s, no AI or network). `test_prompt.py`: 12 checks of the proof check (`split_reply`, `find_sources`, `answer`), using `monkeypatch.setattr(prompt, "chat", ...)` to replace the AI with a hand-written reply.
 
 - After each step works, update the Plan section (mark it DONE and move NEXT) and make a git commit with a clear message.
