@@ -160,3 +160,15 @@ data/                  everything downloaded or built (not in git)
 The documentation is © the requests project. The downloaded copy stays in
 `data/` on this computer (it is not committed to git) and is used only for
 this learning project. Every answer links to its source page.
+
+## Run chatbot again
+
+## Run the chatbot again
+
+```bash
+ollama serve        # only if the 🦙 isn't already in the menu bar
+uv run streamlit run src/rag_chatbot/app.py
+
+uv run uvicorn rag_chatbot.api:app --host 127.0.0.1 --port 8000
+```
+
